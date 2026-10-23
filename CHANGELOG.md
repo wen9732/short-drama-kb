@@ -1,5 +1,8 @@
 # 更新记录
 
+## 2026-10-23 系统提示词
+- 新增 `系统提示词/短剧情绪导演_System_Prompt_V2.0_强制毒舌版.md`：以 V1.1 为骨架，写入情绪五拍、AI感八来源、两种表演模式、Seedance 2.5 规范、强制毒舌协议，附五个完整范例（改写示范、毒舌批改、雨夜伞戏、最后一杯、空枪）。
+
 ## 2026-10-23 架构 v2：分层
 - 建立六层架构（exec / script / perf / fight / cam / genre），每个库只管一个维度，写入 CLAUDE.md。
 - 改名：`seedance25-spec` → `exec-seedance25`，`drama-restrained` → `perf-restrained`，`korean-noir-explosive` → `perf-explosive`。
