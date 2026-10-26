@@ -9,7 +9,10 @@
   python3 tools/check_copy.py - < 草稿.md       # 从标准输入读
   python3 tools/check_copy.py 草稿.md --min 20  # 改阈值（默认连续 25 字相同算命中）
 
-去掉所有空白后比较。"无背景音乐，无字幕"这类短套话不到阈值，不会误报。
+去掉所有空白后比较。两类内容不算照抄：
+- 规则库（.claude/skills/ 和 CLAUDE.md）里原有的句子，例如执行层要求每条都写的
+  "严格按台词生成，禁止增减台词。无背景音乐，无字幕，无旁白"；
+- 反引号里的库名和路径，例如 `exec-seedance25`。
 """
 import os
 import re
@@ -34,7 +37,22 @@ def main():
         print(__doc__)
         sys.exit(2)
     draft = sys.stdin.read() if args[0] == "-" else open(args[0], encoding="utf-8").read()
+    draft = re.sub(r"`[^`\n]*`", "", draft)
     d = norm(draft)
+    rules = ""
+    for dp, _, fs in os.walk(os.path.join(ROOT, ".claude", "skills")):
+        for f in fs:
+            if f.endswith(".md"):
+                rules += norm(open(os.path.join(dp, f), encoding="utf-8", errors="ignore").read())
+    rules += norm(open(os.path.join(ROOT, "CLAUDE.md"), encoding="utf-8").read())
+    # 先把草稿里和规则库原文重合 12 字以上的部分剔掉，换成断点，再拿剩下的去比案例
+    m = 12
+    covered = [False] * len(d)
+    for i in range(len(d) - m + 1):
+        if d[i:i + m] in rules:
+            for k in range(i, i + m):
+                covered[k] = True
+    d = "".join("\x00" if c else ch for ch, c in zip(d, covered))
     cases = {}
     for dp, _, fs in os.walk(CASES):
         for f in fs:
@@ -47,12 +65,12 @@ def main():
     i = 0
     while i + n <= len(d):
         w = d[i:i + n]
-        src = next((c for c, t in cases.items() if w in t), None)
+        src = None if "\x00" in w else next((c for c, t in cases.items() if w in t), None)
         if not src:
             i += 1
             continue
         j = i + n  # 尽量向后延伸，合并成一整段
-        while j < len(d) and d[i:j + 1] in cases[src]:
+        while j < len(d) and d[j] != "\x00" and d[i:j + 1] in cases[src]:
             j += 1
         hits.append((i, j, src))
         i = j
