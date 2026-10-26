@@ -76,7 +76,7 @@ for name, active in reg.items():
 # ---- 案例库检查（规则见 范例/README.md）----
 CASES = os.path.join(ROOT, "范例")
 RAW = os.path.join(ROOT, "原始素材")
-META = re.compile(r"^\s*(-\s*)?(原画布[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d)")
+META = re.compile(r"^\s*(-\s*)?(原画布[:：]|画布链接[:：]|作品链接[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d)")
 
 
 def norm(s):
