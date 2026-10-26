@@ -8,6 +8,7 @@
 4. SKILL.md 不超过 200 行
 5. CLAUDE.md 注册表与实际目录一致（启用的库都存在，存在的库都已登记）
 6. 技能里引用的 `范例/...` 路径真实存在（支持 * 通配）
+7. 案例库：每个案例都登记在所属类别的 索引.md；无画布元数据残留；范例之间、范例与原始素材之间无重复正文
 用法：python3 tools/check_kb.py   （在仓库根目录运行）
 """
 import glob
@@ -71,6 +72,68 @@ for d in dirs:
 for name, active in reg.items():
     if active and name not in dirs:
         errors.append(f"注册表登记为启用，但目录不存在：{name}")
+
+# ---- 案例库检查（规则见 范例/README.md）----
+CASES = os.path.join(ROOT, "范例")
+RAW = os.path.join(ROOT, "原始素材")
+META = re.compile(r"^\s*(-\s*)?(原画布[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d)")
+
+
+def norm(s):
+    return re.sub(r"\s+", "", s)
+
+
+case_files = []
+for dp, _, fs in os.walk(CASES):
+    for f in fs:
+        if f in ("README.md", "索引.md"):
+            continue
+        case_files.append(os.path.join(dp, f))
+
+# 1. 每个案例都归在某个有索引的类别里，并被索引列出
+for cf in case_files:
+    d, owner = os.path.dirname(cf), None
+    while d.startswith(CASES) and d != CASES:
+        if os.path.exists(os.path.join(d, "索引.md")):
+            owner = d
+            break
+        d = os.path.dirname(d)
+    rel = os.path.relpath(cf, CASES)
+    if not owner:
+        errors.append(f"案例没有所属索引：范例/{rel}（类别目录缺 索引.md）")
+        continue
+    idx = open(os.path.join(owner, "索引.md"), encoding="utf-8").read()
+    if f"`{os.path.relpath(cf, owner)}`" not in idx:
+        errors.append(f"案例未登记到索引：范例/{rel} → 写进 {os.path.relpath(owner, ROOT)}/索引.md")
+
+# 2. 画布元数据残留
+for cf in case_files:
+    for i, line in enumerate(open(cf, encoding="utf-8", errors="ignore"), 1):
+        if META.match(line):
+            errors.append(f"画布元数据残留：范例/{os.path.relpath(cf, CASES)} 第 {i} 行")
+            break
+
+# 3. 查重：范例之间、范例与原始素材
+texts = {cf: norm(open(cf, encoding="utf-8", errors="ignore").read()) for cf in case_files}
+seen = {}
+for cf, t in texts.items():
+    if t in seen:
+        errors.append(f"范例重复：{os.path.relpath(cf, ROOT)} 与 {os.path.relpath(seen[t], ROOT)} 正文相同")
+    seen.setdefault(t, cf)
+raw = {}
+for dp, _, fs in os.walk(RAW):
+    for f in fs:
+        if f.endswith((".md", ".txt")):
+            p = os.path.join(dp, f)
+            raw[p] = norm(open(p, encoding="utf-8", errors="ignore").read())
+for cf, t in texts.items():
+    body = t[:2000] if len(t) > 2000 else t
+    if len(body) < 200:
+        continue
+    for p, rt in raw.items():
+        if body in rt:
+            errors.append(f"原始素材里存了范例的正文：{os.path.relpath(p, ROOT)} 含 {os.path.relpath(cf, ROOT)} → 改成指针")
+            break
 
 print(f"技能 {len(dirs)} 个：{', '.join(dirs)}")
 for w in warnings:
