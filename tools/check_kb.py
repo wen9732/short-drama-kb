@@ -137,6 +137,102 @@ for cf, t in texts.items():
             break
 
 
+# ---- 导演库（规则见 cam-director 的 SKILL.md「新导演入库」）----
+DIRLIB = os.path.join(SKILLS, "cam-director")
+dir_report = None
+if os.path.isdir(DIRLIB):
+    ref = os.path.join(DIRLIB, "references")
+    CODE = r"(?<![A-Za-z0-9])((?:HW|JP|KR|CN|EU|[A-Z]{2})\d{2}|M\d{2})(?!\d)"
+    HEAD = re.compile(r"^### ([A-Z]{2}\d{2}|M\d{2}) (.+)$", re.M)
+    TECH_FIELDS = ("出处", "机制", "用在", "Seedance 写法", "常配接缝", "别用在")
+    MIND_FIELDS = ("问题", "做法", "出处", "落到设计", "反例")
+    entries, verified = {}, 0
+
+    def blocks(path):
+        text = open(path, encoding="utf-8").read()
+        heads = list(HEAD.finditer(text))
+        for i, h in enumerate(heads):
+            end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
+            yield h.group(1), text[h.start():end]
+
+    def field(body, name):
+        m = re.search(r"^- \*\*" + re.escape(name) + r"：\*\*(.*?)(?=^- \*\*|\Z)", body, re.M | re.S)
+        return m.group(1) if m else None
+
+    tech_files = sorted(glob.glob(os.path.join(ref, "导演手法", "*.md")))
+    mind_file = os.path.join(ref, "导演思维.md")
+    for path, fields, is_mind in [(f, TECH_FIELDS, False) for f in tech_files] + [(mind_file, MIND_FIELDS, True)]:
+        if not os.path.exists(path):
+            errors.append(f"导演库缺文件：{os.path.relpath(path, ROOT)}")
+            continue
+        rel = os.path.relpath(path, ROOT)
+        if not is_mind and len(open(path, encoding="utf-8").read()) > 7000:
+            warnings.append(f"{rel}: 超过约 6000 字，新条目开下一份 -N.md")
+        for code, body in blocks(path):
+            if code in entries:
+                errors.append(f"导演库编号重复：{code}（{rel} 与 {entries[code]}）")
+            entries[code] = rel
+            if is_mind != code.startswith("M"):
+                errors.append(f"{rel}: {code} 放错了文件（M 编号只放导演思维.md）")
+            for fn in fields:
+                v = field(body, fn)
+                if v is None or not v.strip():
+                    errors.append(f"{rel}: {code} 缺「{fn}」")
+            src = field(body, "出处") or ""
+            if "【已核】" in src:
+                verified += 1
+            elif "【公认】" not in src:
+                errors.append(f"{rel}: {code} 的出处没有标【已核】或【公认】")
+
+    # 编号 → 文件 对照（总表第三节）
+    table = os.path.join(ref, "导演库总表.md")
+    ttext = open(table, encoding="utf-8").read() if os.path.exists(table) else ""
+    ranges = []
+    for m in re.finditer(r"([A-Z]{2})(\d{2})–[A-Z]{2}(\d{2}) → `([^`]+)`", ttext):
+        ranges.append((m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)))
+    for m in re.finditer(r"(?<![A-Z])([A-Z]{2}) → `([^`]+)`", ttext):
+        ranges.append((m.group(1), 0, 99, m.group(2)))
+    for code, rel in entries.items():
+        if code.startswith("M"):
+            continue
+        pre, num = code[:2], int(code[2:])
+        want = [r[3] for r in ranges if r[0] == pre and r[1] <= num <= r[2]]
+        if not want:
+            errors.append(f"导演库总表第三节没写 {code} 在哪个文件")
+        elif os.path.basename(rel) not in want:
+            errors.append(f"{code} 在 {os.path.basename(rel)}，总表第三节写的是 {want[0]}")
+
+    # 名录：每条手法都登记，登记的都存在
+    skill_text = open(os.path.join(DIRLIB, "SKILL.md"), encoding="utf-8").read()
+    roster = re.search(r"## 导演名录\n(.*?)(?=\n## )", skill_text, re.S)
+    listed = set(re.findall(CODE, roster.group(1))) if roster else set()
+    for code in entries:
+        if not code.startswith("M") and code not in listed:
+            errors.append(f"导演名录（cam-director SKILL.md）没有登记 {code}")
+    for code in listed - set(entries):
+        errors.append(f"导演名录登记了不存在的条目：{code}")
+
+    # 引用检查：导演库各文件与导演语法里引用的编号都要存在；转场编号要在转场全集里
+    tfile = os.path.join(SKILLS, "cam-transitions", "references", "转场全集.md")
+    tcodes = set(re.findall(r"^### (T\d{2})", open(tfile, encoding="utf-8").read(), re.M)) if os.path.exists(tfile) else set()
+    scan = glob.glob(os.path.join(DIRLIB, "**", "*.md"), recursive=True) + [
+        os.path.join(SKILLS, "exec-seedance25", "references", "导演语法.md")]
+    for path in scan:
+        if not os.path.exists(path):
+            continue
+        text = re.sub(r"```.*?```", "", open(path, encoding="utf-8").read(), flags=re.S)  # 模板代码块不算引用
+        rel = os.path.relpath(path, ROOT)
+        for code in set(re.findall(CODE, text)):
+            if code not in entries:
+                errors.append(f"{rel}: 引用了不存在的导演库编号 {code}")
+        if tcodes:
+            for t in set(re.findall(r"(?<![A-Za-z0-9-])(T\d{2})(?!\d)", text)):
+                if t not in tcodes:
+                    errors.append(f"{rel}: 引用了不存在的转场编号 {t}")
+    tech = [c for c in entries if not c.startswith("M")]
+    dir_report = f"导演库：手法 {len(tech)} 条、思维 {len(entries) - len(tech)} 条；出处含【已核】的 {verified} 条，其余为【公认】"
+
+
 # ---- 工位卡与项目卡（规则见 维护手册.md 第三节）----
 MUST_LIMIT, TOTAL_LIMIT = 20000, 30000
 PATH = re.compile(r"`([^`<>*]+\.(?:md|txt))`")
@@ -171,7 +267,10 @@ base = chars(entry) if os.path.exists(os.path.join(ROOT, entry)) else 0
 report = []
 for c in cards:
     rel_c = os.path.relpath(c, ROOT)
-    sec = sections(open(c, encoding="utf-8").read())
+    raw_card = open(c, encoding="utf-8").read()
+    for h in re.findall(r"^##\s+((?:必读|按需)\S+.*)$", raw_card, re.M):
+        errors.append(f"{rel_c}: 段名「{h}」后面不能带字（否则字数统计会漏掉这一段），说明写到下一行")
+    sec = sections(raw_card)
     if "必读" not in sec:
         errors.append(f"{rel_c}: 缺少「## 必读」段")
         continue
@@ -201,6 +300,8 @@ for c in cards:
         warnings.append(f"{rel_c}: 必读加最重一档按需 {m_sum + heavy} 字，超过 {TOTAL_LIMIT} 字")
 
 print(f"技能 {len(dirs)} 个：{', '.join(dirs)}")
+if dir_report:
+    print(dir_report)
 if report:
     print("工位加载量（含 启动.md 和卡片本身）：")
     for rel_c, m_sum, top in report:
