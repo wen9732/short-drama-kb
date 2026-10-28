@@ -6,9 +6,10 @@
 2. 层前缀合法
 3. 有"## 边界"段
 4. SKILL.md 不超过 200 行
-5. CLAUDE.md 注册表与实际目录一致（启用的库都存在，存在的库都已登记）
+5. 维护手册.md 注册表与实际目录一致（启用的库都存在，存在的库都已登记）
 6. 技能里引用的 `范例/...` 路径真实存在（支持 * 通配）
-7. 案例库：每个案例都登记在所属类别的 索引.md；无画布元数据残留；范例之间、范例与原始素材之间无重复正文
+7. 案例库：每个案例都登记在所属类别的 索引.md；无画布元数据和点评残留；范例之间、范例与原始素材之间无重复正文
+8. 工位卡与项目卡（v3.0）：列出的文件都存在；必读里没有 范例/ 和 原始素材/；按加载预算报出字数
 用法：python3 tools/check_kb.py   （在仓库根目录运行）
 """
 import glob
@@ -18,14 +19,14 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILLS = os.path.join(ROOT, ".claude", "skills")
-PREFIXES = ("exec-", "script-", "perf-", "fight-", "cam-", "genre-")
+PREFIXES = ("exec-", "script-", "perf-", "fight-", "cam-", "genre-", "art-")
 MAX_LINES = 200
 
 errors, warnings = [], []
 
 
 def registry():
-    text = open(os.path.join(ROOT, "CLAUDE.md"), encoding="utf-8").read()
+    text = open(os.path.join(ROOT, "维护手册.md"), encoding="utf-8").read()
     names = {}
     for m in re.finditer(r"^\|\s*`([a-z]+-[a-z0-9*-]+)`\s*\|(.*)$", text, re.M):
         name, rest = m.group(1), m.group(2)
@@ -62,7 +63,7 @@ for d in dirs:
     if len(lines) > MAX_LINES:
         errors.append(f"{d}: {len(lines)} 行，超过 {MAX_LINES} 行上限，细节移到 references/")
     if d not in reg:
-        errors.append(f"{d}: 未在 CLAUDE.md 注册表登记")
+        errors.append(f"{d}: 未在 维护手册.md 注册表登记")
     for ref in re.findall(r"`(范例/[^`]+)`", text):
         if not glob.glob(os.path.join(ROOT, ref)):
             errors.append(f"{d}: 引用的范例不存在 → {ref}")
@@ -76,7 +77,7 @@ for name, active in reg.items():
 # ---- 案例库检查（规则见 范例/README.md）----
 CASES = os.path.join(ROOT, "范例")
 RAW = os.path.join(ROOT, "原始素材")
-META = re.compile(r"^\s*(-\s*)?(原画布[:：]|画布链接[:：]|作品链接[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d)")
+META = re.compile(r"^\s*(-\s*)?(原画布[:：]|画布链接[:：]|作品链接[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d|>?\s*\**(用户评价|保留原因|为什么选它)[:：]|## (设计要点|执行风险|如果翻车))")
 
 
 def norm(s):
@@ -110,7 +111,7 @@ for cf in case_files:
 for cf in case_files:
     for i, line in enumerate(open(cf, encoding="utf-8", errors="ignore"), 1):
         if META.match(line):
-            errors.append(f"画布元数据残留：范例/{os.path.relpath(cf, CASES)} 第 {i} 行")
+            errors.append(f"画布元数据或点评残留（点评写进索引）：范例/{os.path.relpath(cf, CASES)} 第 {i} 行")
             break
 
 # 3. 查重：范例之间、范例与原始素材
@@ -135,7 +136,75 @@ for cf, t in texts.items():
             errors.append(f"原始素材里存了范例的正文：{os.path.relpath(p, ROOT)} 含 {os.path.relpath(cf, ROOT)} → 改成指针")
             break
 
+
+# ---- 工位卡与项目卡（规则见 维护手册.md 第三节）----
+MUST_LIMIT, TOTAL_LIMIT = 20000, 30000
+PATH = re.compile(r"`([^`<>*]+\.(?:md|txt))`")
+
+
+def chars(rel):
+    return len(open(os.path.join(ROOT, rel), encoding="utf-8").read())
+
+
+def sections(text):
+    out, cur = {}, None
+    for line in text.splitlines():
+        m = re.match(r"^##\s+(\S+)", line)
+        if m:
+            cur = m.group(1)
+            out[cur] = []
+        elif cur:
+            out[cur].append(line)
+    return out
+
+
+entry = "启动.md"
+if not os.path.exists(os.path.join(ROOT, entry)):
+    errors.append("缺少总入口 启动.md")
+else:
+    for rel in PATH.findall(open(os.path.join(ROOT, entry), encoding="utf-8").read()):
+        if not rel.startswith(("python3",)) and "/" in rel and not os.path.exists(os.path.join(ROOT, rel)):
+            errors.append(f"启动.md 引用的文件不存在：{rel}")
+
+cards = sorted(glob.glob(os.path.join(ROOT, "工位", "*.md"))) + sorted(glob.glob(os.path.join(ROOT, "项目", "*", "启动.md")))
+base = chars(entry) if os.path.exists(os.path.join(ROOT, entry)) else 0
+report = []
+for c in cards:
+    rel_c = os.path.relpath(c, ROOT)
+    sec = sections(open(c, encoding="utf-8").read())
+    if "必读" not in sec:
+        errors.append(f"{rel_c}: 缺少「## 必读」段")
+        continue
+    must = []
+    for line in sec["必读"]:
+        must += PATH.findall(line)
+    for p in must:
+        if p.startswith(("范例/", "原始素材/")):
+            errors.append(f"{rel_c}: 必读里不许有案例或原始素材 → {p}（改成按需，点名才读）")
+    opts = []
+    for line in sec.get("按需", []):
+        ps = PATH.findall(line)
+        if ps:
+            opts.append(ps)
+    for p in must + [x for o in opts for x in o]:
+        if not os.path.exists(os.path.join(ROOT, p)):
+            errors.append(f"{rel_c}: 列出的文件不存在 → {p}")
+    try:
+        m_sum = base + chars(rel_c) + sum(chars(p) for p in dict.fromkeys(must))
+        heavy = max((sum(chars(p) for p in dict.fromkeys(o) if p not in must) for o in opts), default=0)
+    except FileNotFoundError:
+        continue
+    report.append((rel_c, m_sum, m_sum + heavy))
+    if m_sum > MUST_LIMIT:
+        errors.append(f"{rel_c}: 必读 {m_sum} 字，超过 {MUST_LIMIT} 字预算 → 拆文件或挪到按需")
+    elif m_sum + heavy > TOTAL_LIMIT:
+        warnings.append(f"{rel_c}: 必读加最重一档按需 {m_sum + heavy} 字，超过 {TOTAL_LIMIT} 字")
+
 print(f"技能 {len(dirs)} 个：{', '.join(dirs)}")
+if report:
+    print("工位加载量（含 启动.md 和卡片本身）：")
+    for rel_c, m_sum, top in report:
+        print(f"  {rel_c}：必读 {m_sum} 字；最重一档 {top} 字")
 for w in warnings:
     print("提示 ", w)
 for e in errors:

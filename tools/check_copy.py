@@ -10,7 +10,7 @@
   python3 tools/check_copy.py 草稿.md --min 20  # 改阈值（默认连续 25 字相同算命中）
 
 去掉所有空白后比较。两类内容不算照抄：
-- 规则库（.claude/skills/ 和 CLAUDE.md）里原有的句子，例如执行层要求每条都写的
+- 规则库（.claude/skills/、CLAUDE.md、启动.md、维护手册.md）里原有的句子，例如执行层要求每条都写的
   "严格按台词生成，禁止增减台词。无背景音乐，无字幕，无旁白"；
 - 反引号里的库名和路径，例如 `exec-seedance25`。
 """
@@ -44,7 +44,9 @@ def main():
         for f in fs:
             if f.endswith(".md"):
                 rules += norm(open(os.path.join(dp, f), encoding="utf-8", errors="ignore").read())
-    rules += norm(open(os.path.join(ROOT, "CLAUDE.md"), encoding="utf-8").read())
+    for f in ("CLAUDE.md", "启动.md", "维护手册.md"):
+        if os.path.exists(os.path.join(ROOT, f)):
+            rules += norm(open(os.path.join(ROOT, f), encoding="utf-8").read())
     # 先把草稿里和规则库原文重合 12 字以上的部分剔掉，换成断点，再拿剩下的去比案例
     m = 12
     covered = [False] * len(d)

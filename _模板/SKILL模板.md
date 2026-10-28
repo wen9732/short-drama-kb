@@ -8,7 +8,7 @@ description: <层名>｜<一句话：写什么类型的东西时用，只管哪�
 1. 复制到 .claude/skills/<层前缀>-<库名>/SKILL.md
 2. 层前缀只能是：exec- / script- / perf- / fight- / cam- / genre-
 3. 正文不超过 200 行；长表格、术语表放进同目录 references/
-4. 在 CLAUDE.md 注册表登记，运行 python3 tools/check_kb.py
+4. 在 维护手册.md 注册表登记，运行 python3 tools/check_kb.py
 -->
 
 # <层名>·<库名>
