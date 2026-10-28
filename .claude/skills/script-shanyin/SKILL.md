@@ -152,6 +152,7 @@ metadata:
 | 阶段3 人物、结构 | ＋ `references/core/02-stage3.md` ＋ 格式文件 |
 | 阶段4 剧本、改稿 | ＋ `references/core/03-stage4.md` ＋ `references/dialogue-aesthetics.md` |
 | 阶段5 冷读、诊断 | ＋ `references/core/04-stage5.md` ＋ `references/core/02-stage3.md` ＋ 格式文件 |
+| 作品发在抖音等短视频平台：选题、前 15 秒、划走点诊断 | ＋ `references/viral-topic.md`（阶段1、2、5 用；和反庸俗冲突时以本 Skill 为准） |
 
 只读表里列出的文件，其余不预读；遇到"见 core-methodology 第X节"，按目录页找到对应文件再读。
 
