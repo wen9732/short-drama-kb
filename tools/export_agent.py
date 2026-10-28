@@ -7,7 +7,10 @@
 用法：
   python3 tools/export_agent.py 美学图像            # → 系统提示词/导出/美学图像.md
   python3 tools/export_agent.py 美学图像 情绪导演     # 一次导出多张
-  python3 tools/export_agent.py --all                # 导出 工位/ 下全部工位卡
+  python3 tools/export_agent.py --all                # 导出 工位/ 下的工位卡（库管、编剧除外）
+
+库管只管本仓库，不导出。编剧（山音）规则分阶段、文件多，给其他 AI 用时，直接把
+.claude/skills/script-shanyin/ 整个文件夹作为知识库上传，SKILL.md 当系统提示词。
 """
 import glob
 import os
@@ -77,6 +80,7 @@ def main():
         sys.exit(2)
     if args == ["--all"]:
         args = [os.path.splitext(os.path.basename(p))[0] for p in sorted(glob.glob(os.path.join(ROOT, "工位", "*.md")))]
+        args = [a for a in args if a not in ("库管", "编剧")]
     for a in args:
         export(a)
 
