@@ -234,7 +234,7 @@ if os.path.isdir(DIRLIB):
 
 
 # ---- 工位卡与项目卡（规则见 维护手册.md 第三节）----
-MUST_LIMIT, TOTAL_LIMIT = 20000, 30000
+MUST_LIMIT, TOTAL_LIMIT = 20000, 35000
 PATH = re.compile(r"`([^`<>*]+\.(?:md|txt))`")
 
 
