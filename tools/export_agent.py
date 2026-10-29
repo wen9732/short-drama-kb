@@ -83,6 +83,9 @@ def main():
         args = [a for a in args if a not in ("库管", "编剧")]
     for a in args:
         export(a)
+    if sys.argv[1:] == ["--all"]:
+        import export_guide  # 同目录脚本：顺手把"给其他 AI 的接入说明"一起更新
+        export_guide.main()
 
 
 if __name__ == "__main__":
