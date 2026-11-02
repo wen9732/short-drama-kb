@@ -88,8 +88,15 @@ def shot_paragraphs(block):
 
 # ---------- 检查 ----------
 
+def unify_shots(text):
+    """把「SHOT 01｜0–2秒」这种写法（真人情绪表演的结构）统一成「镜头1（0-2秒）」再查。"""
+    return re.sub(r"SHOT\s*0*(\d+)\s*[｜|]\s*(\d+)\s*[-–—]\s*(\d+)\s*秒",
+                  lambda m: f"镜头{m.group(1)}（{m.group(2)}-{m.group(3)}秒）", text)
+
+
 def check(draft, script=None):
     errors, notes = [], []
+    draft = unify_shots(draft)
     body = strip_code_names(draft)
     blocks = code_blocks(draft) or [draft]
 
@@ -228,6 +235,10 @@ def selftest():
     e2, _ = check(clean, "「好。」")
     if e2:
         print("验错自检失败，干净样例被误报：", e2)
+        return False
+    e3, _ = check("```\nSHOT 01｜0–2秒｜空镜。\nSHOT 02｜3–5秒｜说：{好。}\n不要字幕，不要背景音乐。\n```")
+    if not any("没有接上一镜" in e for e in e3):
+        print("验错自检失败，SHOT 写法的时间戳没查到")
         return False
     return True
 
