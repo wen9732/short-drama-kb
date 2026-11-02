@@ -299,6 +299,15 @@ for c in cards:
     elif m_sum + heavy > TOTAL_LIMIT:
         warnings.append(f"{rel_c}: 必读加最重一档按需 {m_sum + heavy} 字，超过 {TOTAL_LIMIT} 字")
 
+# 验错工具自检：错误库里能机器查的规则还管用
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+try:
+    import check_errors
+    if not check_errors.selftest():
+        errors.append("tools/check_errors.py 自检失败（见上方输出）")
+except Exception as ex:  # noqa: BLE001
+    errors.append(f"tools/check_errors.py 无法运行：{ex}")
+
 print(f"技能 {len(dirs)} 个：{', '.join(dirs)}")
 if dir_report:
     print(dir_report)
