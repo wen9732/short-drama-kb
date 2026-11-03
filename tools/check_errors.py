@@ -18,6 +18,13 @@
   时间戳     镜头时间不连续、和段落总时长对不上；有台词的镜头不足 2 秒
   保护项     代码块里缺"不要字幕""不要背景音乐"
   参考编号   同一个 @图片N 在一段里绑定了两次，或编号跳号（错20）
+  只写本段   代码块里出现"下一段""下一组""下一幕"（v3.11 起只写本段画面）
+  人物锁定   镜头里出现的人物本段没有锁定参考图；锁定写了"全程抱在怀里"，镜头里却放进了座椅
+
+自审（交付前必跑）：
+  python3 tools/check_errors.py 草稿 --script 剧本 --review
+  在上面的检查之外，再列出"逐段连贯表"（每段的站位、第一个镜头、落点），
+  并打印自审清单。按清单逐条过一遍，回复用户时附一行"自审：查了什么，改了什么"。
 
 结果分"错误"（必须改）和"提醒"（人工看一眼再决定）。有错误时退出码为 1。
 """
@@ -37,6 +44,9 @@ TRIGGERS = re.compile(r"听到|听见|看到|看见|说完|话音|因为|为了|
 SHOT = re.compile(r"镜头(\d+)[（(](\d+)-(\d+)秒[）)]")
 DUR = re.compile(r"^\s*(\d+)秒")
 BIND = re.compile(r"@图片(\d+)")
+LOCK = re.compile(r"^([\u4e00-\u9fff]{1,6})：@图片\d+", re.M)
+NEXT = re.compile(r"下一段|下一组|下一幕|下一集")
+PUT_DOWN = re.compile(r"放进|坐进|放到座椅|放在座椅")
 STAGE_WORDS = re.compile(r"节奏|特写|镜头|字幕|片尾|政策|动作|画面|切点|转场|定格|场景|情节|人物|备注|说明|边界|依据")
 
 
@@ -142,9 +152,28 @@ def check(draft, script=None):
     for m in TEMPLATE.finditer(body):
         errors.append(f"机械表演模板（错21）：「{m.group(0)}」，改写成真实因果")
 
+    all_names = sorted({n for blk in blocks for n in LOCK.findall(blk)}, key=len, reverse=True)
     for bi, block in enumerate(blocks, 1):
         tag = f"第{bi}个代码块" if len(blocks) > 1 else "草稿"
         is_prompt = bool(SHOT.search(block))
+
+        if is_prompt:
+            # 只写本段
+            for m in sorted(set(NEXT.findall(block))):
+                errors.append(f"{tag} 提示词里写了「{m}」：只写本段画面，段与段怎么接写在设计表里（v3.11）")
+            # 人物锁定
+            first = SHOT.search(block).start()
+            shots_text = block[first:]
+            locked = set(LOCK.findall(block))
+            masked = shots_text
+            for name in all_names:
+                cnt = masked.count(name)
+                masked = masked.replace(name, "＃")
+                if cnt and name not in locked:
+                    notes.append(f"{tag} 「{name}」在镜头里出现了{cnt}次，但本段没有锁定参考图：画面里有他就补上锁定，只是提到就忽略")
+            for line in block.splitlines():
+                if LOCK.match(line) and "全程" in line and "抱" in line and PUT_DOWN.search(shots_text):
+                    errors.append(f"{tag} 锁定里写了「全程……抱在怀里」，镜头里却把孩子放进了座椅：改锁定，写清这一段孩子的状态")
 
         # 空反应镜
         for seg in shot_paragraphs(block):
@@ -192,12 +221,40 @@ def check(draft, script=None):
     return errors, notes
 
 
-MANUAL = """人工核对（脚本查不了，对照 工位/_共用/错误速查.md）：
-  1. 用户原话里的关键词逐条兑现了吗？核心概念是不是我替用户定的？（错01、错02）
-  2. 每句台词只说这个人此刻知道的事吗？（错24）
-  3. 每个人、每样物件从哪来、在哪、到哪去，交代了吗？（错05）
-  4. 有没有为了走通剧情倒推出来的道具、巧合、强加的笑点？（错06、错08、错26）
-  5. 剧本之外我加的每个镜头：触发是什么、观众读出什么、合不合人设？（错28）"""
+MANUAL = """自审清单（脚本查不了，逐条过；对照 工位/_共用/错误速查.md）：
+  1. 用户这次说的每一点，逐条列出来打勾了吗？有没有顺手改了他没让改的？（错01、错02）
+  2. 物件去向：每个人、每辆车、每台座椅这一段在哪、什么状态，和上一段的落点对得上吗？（错05）
+  3. 人物状态：抱着还是放下、坐着还是站着、情绪到哪一档（哭没哭、是不满还是生气），前后一致吗？
+  4. 空间：门店布局、楼层、左右站位、动线，和参考图一致吗？背景里有没有不该出现的东西（比如柜台）？
+  5. 命名：同一个人全文只有一个称呼吗？有没有和道具、语音助手重名？
+  6. 参考图：文字里写的发型、服装、颜色，有没有和参考图打架？同一件道具颜色前后一致吗？
+  7. 台词：每句只说这个人此刻知道的事吗？念出来像人话吗？我改动的台词向用户说明了吗？（错24、错27）
+  8. 剧本之外我加的每个镜头：触发是什么、观众读出什么、合不合人设？（错28）
+  9. 冷读：把每段提示词当成模型第一次看到的唯一一段，只靠这段文字，画面会不会生成错？"""
+
+
+# ---------- 自审：逐段连贯表 ----------
+
+def review(draft):
+    """把每段的站位、第一个镜头、落点并排列出来，方便逐段核对连贯。"""
+    draft = unify_shots(draft)
+    heads = [(m.start(), m.group(1)) for m in re.finditer(r"^#{2,4}\s*(.+)$", draft, re.M)]
+    out = ["逐段连贯表（上一段的落点 ↔ 这一段的站位和第一个镜头，逐行对照）："]
+    for m in re.finditer(r"```[^\n]*\n(.*?)```", draft, re.S):
+        block = m.group(1)
+        if not SHOT.search(block):
+            continue
+        title = next((t for pos, t in reversed(heads) if pos < m.start()), "（无标题）")
+        stand = re.search(r"站位：([^\n]*)", block)
+        first = SHOT.search(block)
+        first_line = block[first.start():].split("\n", 2)
+        first_txt = (first_line[1] if len(first_line) > 1 else first_line[0])[:70]
+        end = re.search(r"【结尾与转场】\n([^\n]*)", block)
+        out.append(f"■ {title}")
+        out.append(f"  站位：{(stand.group(1) if stand else '（没写）')[:90]}")
+        out.append(f"  开头：{first_txt}")
+        out.append(f"  落点：{(end.group(1) if end else '（没写）')[:90]}")
+    return "\n".join(out)
 
 
 # ---------- 自检 ----------
@@ -236,6 +293,12 @@ def selftest():
     if e2:
         print("验错自检失败，干净样例被误报：", e2)
         return False
+    e4, n4 = check("```\n安安：@图片1，一岁男宝，全程被妈妈抱在怀里。\n镜头1（0-2秒）｜妈妈把安安放进座椅，小雨走过来。下一段从店里开始。\n不要字幕，不要背景音乐。\n```\n```\n小雨：@图片1，店员。\n镜头1（0-2秒）｜空镜。\n不要字幕，不要背景音乐。\n```")
+    t4 = "\n".join(e4 + n4)
+    for want in ("下一段", "全程", "「小雨」在镜头里出现"):
+        if want not in t4:
+            print("验错自检失败，新检查没查出：", want)
+            return False
     e3, _ = check("```\nSHOT 01｜0–2秒｜空镜。\nSHOT 02｜3–5秒｜说：{好。}\n不要字幕，不要背景音乐。\n```")
     if not any("没有接上一镜" in e for e in e3):
         print("验错自检失败，SHOT 写法的时间戳没查到")
@@ -249,6 +312,9 @@ def main():
         ok = selftest()
         print("验错自检通过" if ok else "")
         sys.exit(0 if ok else 1)
+    want_review = "--review" in args
+    if want_review:
+        args.remove("--review")
     script = None
     if "--script" in args:
         i = args.index("--script")
@@ -265,6 +331,8 @@ def main():
         print("提醒 ", n)
     if script is None:
         print("（没给 --script，台词完整性没查）")
+    if want_review:
+        print(review(draft))
     print(MANUAL)
     print("通过" if not errors else f"未通过：{len(errors)} 个错误")
     sys.exit(1 if errors else 0)
