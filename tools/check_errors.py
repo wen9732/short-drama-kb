@@ -46,6 +46,7 @@ DUR = re.compile(r"^\s*(\d+)秒")
 BIND = re.compile(r"@图片(\d+)")
 LOCK = re.compile(r"^([\u4e00-\u9fff]{1,6})：@图片\d+", re.M)
 NEXT = re.compile(r"下一段|下一组|下一幕|下一集")
+PREV = re.compile(r"同上一段|上一段|上一组|前一段|前面几场|刚才那|区分开")
 ABSOLUTE = re.compile(r"全程|始终|一直|从头到尾")
 STAGE_WORDS = re.compile(r"节奏|特写|镜头|字幕|片尾|政策|动作|画面|切点|转场|定格|场景|情节|人物|备注|说明|边界|依据")
 
@@ -161,6 +162,8 @@ def check(draft, script=None):
             # 只写本段
             for m in sorted(set(NEXT.findall(block))):
                 errors.append(f"{tag} 提示词里写了「{m}」：只写本段画面，段与段怎么接写在设计表里（v3.11）")
+            for m in sorted(set(PREV.findall(block))):
+                notes.append(f"{tag} 提示词里写了「{m}」：模型看不到别段，需要的状态在本段写全（v3.14）")
             # 人物锁定
             first = SHOT.search(block).start()
             shots_text = block[first:]
@@ -293,9 +296,9 @@ def selftest():
     if e2:
         print("验错自检失败，干净样例被误报：", e2)
         return False
-    e4, n4 = check("```\n角色甲：@图片1，全程站着。\n镜头1（0-2秒）｜角色甲坐下，角色乙走过来。下一段从屋里开始。\n不要字幕，不要背景音乐。\n```\n```\n角色乙：@图片1。\n镜头1（0-2秒）｜空镜。\n不要字幕，不要背景音乐。\n```")
+    e4, n4 = check("```\n角色甲：@图片1，全程站着。\n镜头1（0-2秒）｜角色甲坐下，角色乙走过来，站位同上一段。下一段从屋里开始。\n不要字幕，不要背景音乐。\n```\n```\n角色乙：@图片1。\n镜头1（0-2秒）｜空镜。\n不要字幕，不要背景音乐。\n```")
     t4 = "\n".join(e4 + n4)
-    for want in ("下一段", "绝对状态", "「角色乙」在镜头里出现"):
+    for want in ("下一段", "上一段", "绝对状态", "「角色乙」在镜头里出现"):
         if want not in t4:
             print("验错自检失败，新检查没查出：", want)
             return False
