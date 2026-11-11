@@ -30,7 +30,7 @@
 | 镜头 | `cam-transitions` | 两镜之间怎么接：34 类转场，四段式写法 |
 | 类型 | `genre-korean-noir` | 让画面"看起来像韩国犯罪片"的视觉氛围包 |
 | 美术 | `art-image` | 静态图：定调、人设图、场景图、海报的生图提示词 |
-| 动作 | `fight-` | 未建 |
+| 动作 | `fight-combat` | v3.19 启用，未经生成验证 |
 
 **冲突优先级（记牢，用来判断谁听谁）：**
 `exec ＞ script ＞ perf ＞ fight ＞ cam ＞ genre`
