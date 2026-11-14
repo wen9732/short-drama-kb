@@ -104,7 +104,8 @@ for cf in case_files:
         errors.append(f"案例没有所属索引：范例/{rel}（类别目录缺 索引.md）")
         continue
     idx = open(os.path.join(owner, "索引.md"), encoding="utf-8").read()
-    if f"`{os.path.relpath(cf, owner)}`" not in idx:
+    rel_idx = os.path.relpath(cf, owner).replace("\\", "/")
+    if f"`{rel_idx}`" not in idx:
         errors.append(f"案例未登记到索引：范例/{rel} → 写进 {os.path.relpath(owner, ROOT)}/索引.md")
 
 # 2. 画布元数据残留
