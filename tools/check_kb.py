@@ -77,7 +77,7 @@ for name, active in reg.items():
 # ---- 案例库检查（规则见 范例/README.md）----
 CASES = os.path.join(ROOT, "范例")
 RAW = os.path.join(ROOT, "原始素材")
-META = re.compile(r"^\s*(-\s*)?(原画布[:：]|画布链接[:：]|作品链接[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d|>?\s*\**(用户评价|保留原因|为什么选它)[:：]|## (设计要点|执行风险|如果翻车))")
+META = re.compile(r"^\s*(-\s*)?(>?\s*来源[:：]|>?\s*平台参数[:：]|原画布[:：]|画布链接[:：]|作品链接[:：]|工作区[:：]|参数[:：]|参考图清单[:：]|参考图使用清单[:：]|提示词全文|（注[:：]|## \d+\. 视频节点|### 视频 \d|>?\s*\**(用户评价|保留原因|为什么选它)[:：]|## (设计要点|执行风险|如果翻车|可调用的写法|可改进处|附：原文照录说明))|@\[?[0-9a-f-]{16,64}\]?|\{\{Mixed\s*\d+\}\}|〔[^〕]*参考图〕|〔在此|libtv-res\.liblib\.art")
 
 
 def norm(s):
@@ -111,8 +111,8 @@ for cf in case_files:
 # 2. 画布元数据残留
 for cf in case_files:
     for i, line in enumerate(open(cf, encoding="utf-8", errors="ignore"), 1):
-        if META.match(line):
-            errors.append(f"画布元数据或点评残留（点评写进索引）：范例/{os.path.relpath(cf, CASES)} 第 {i} 行")
+        if META.search(line):
+            errors.append(f"画布元数据、哈希串或点评残留（点评写进索引）：范例/{os.path.relpath(cf, CASES)} 第 {i} 行")
             break
 
 # 3. 查重：范例之间、范例与原始素材

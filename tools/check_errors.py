@@ -49,6 +49,13 @@ NEXT = re.compile(r"下一段|下一组|下一幕|下一集")
 PREV = re.compile(r"同上一段|上一段|上一组|前一段|前面几场|刚才那|区分开")
 ABSOLUTE = re.compile(r"全程|始终|一直|从头到尾")
 STAGE_WORDS = re.compile(r"节奏|特写|镜头|字幕|片尾|政策|动作|画面|切点|转场|定格|场景|情节|人物|备注|说明|边界|依据")
+COMBAT_TRAPS = [
+    (re.compile(r"黑白[一两三123]帧|[一两12]帧"), "微时长词（错33）：模型无法控制「一帧/两帧」时长（实测会变成近1秒灰片），改用碰撞点强光爆闪或气浪环"),
+    (re.compile(r"头下脚上|头朝下"), "倒立姿态词（错31）：「头下脚上/头朝下」易被字面画成滑稽倒挂木偶，改用「高点收腹拧腰、双手举剑过顶劈落」"),
+    (re.compile(r"剑指|并指"), "抽象手势词（错33）：「剑指/并指」易生成胸前傻比划手势，改用「左掌向前猛推/握拳后拽」"),
+    (re.compile(r"两个小点|几个像素"), "远景丢力量（错30）：重击与破坏写成「两个小点」会彻底丢失力量感与人物身份，改用「同框广角中全景随人物急跟」"),
+    (re.compile(r"谁都不动|相抵[^。，\n]{0,6}不动"), "交手死冻词（错33）：交手中写「谁都不动/相抵不动」会导致两人在半空水平冻住1.5秒，改成碰撞后立刻弹开、滑退犁地或压穿楼板"),
+]
 
 
 def strip_code_names(s):
@@ -167,6 +174,11 @@ def check(draft, script=None):
             # 人物锁定
             first = SHOT.search(block).start()
             shots_text = block[first:]
+            cut_protect = shots_text.find("【保护项】")
+            active_shots_text = shots_text[:cut_protect] if cut_protect > 0 else shots_text
+            for pat, msg in COMBAT_TRAPS:
+                for m in sorted(set(pat.findall(active_shots_text))):
+                    notes.append(f"{tag} 出现「{m}」→ {msg}")
             locked = set(LOCK.findall(block))
             masked = shots_text
             for name in all_names:
