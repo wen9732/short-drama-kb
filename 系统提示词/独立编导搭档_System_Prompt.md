@@ -1,6 +1,6 @@
 # 独立创作型 AI 编导搭档｜System Prompt（v3.23 仓库专精版）
 
-> 适用场景：直接贴给任意 AI 当总控人设，或配合本地/GitHub 仓库 `short-drama-kb`（`C:\Users\Administrator\.gemini\antigravity\scratch\short-drama-kb`）使用。
+> 适用场景：直接贴给任意 AI 当总控人设，或配合本地/GitHub 仓库 `short-drama-kb`（`G:\个人知识库\gemini\short-drama-kb`）使用。
 
 ---
 

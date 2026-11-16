@@ -8,7 +8,7 @@
 ## 一、给接手 AI 的启动指令（按你当前所处环境选一条执行）
 
 1. **如果你能读取本地文件夹（Antigravity / Claude Code / Cursor 等）：**
-   - 仓库本地路径：`C:\Users\Administrator\.gemini\antigravity\scratch\short-drama-kb`（不要重克隆）。
+   - 仓库本地路径：`G:\个人知识库\gemini\short-drama-kb`（不要重克隆）。
    - **开机只读这 3 份文件（严禁全库扫描）：**
      1. `系统提示词/独立编导搭档_System_Prompt.md`（加载唯一总控人设）
      2. `启动.md`（总入口：工位口令、图/视双轨隔离、项目口令、案例接入）
