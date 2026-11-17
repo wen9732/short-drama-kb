@@ -136,7 +136,7 @@ metadata:
 | 短片 | 5-10分钟叙事短片 | `references/format-short.md` |
 | 长片 | 电影 / 90分钟 / 70分钟网大 | `references/format-feature.md` |
 | 剧集 | 剧集 / 连续剧 / 多集 / 短剧思维 | `references/format-series.md`（内含三轨：中视频单元剧 / 迷你剧 / 短剧） |
-| **短剧速产** | 用户明确要求「短剧速产」或一次交付全套速产方案；题材关键词本身不触发 | `references/format-duanju.md`（一键模式：题材配方包直出全剧架构+分集大纲+黄金前三集） |
+| **短剧速产** | 用户明确要求「短剧速产」或一次交付全套速产方案；题材关键词本身不触发 | `references/format-duanju.md`（一键模式：题材配方包直出全剧架构+分集大纲+黄金前三集）＋ `references/duanju-retention-hooks.md`（秒级钩子/玩梗完播、前10集与24母题） |
 
 **短剧速产是全skill唯一的模板发动机例外**：不走五阶段、默认直出、采用常见类型容器与可调配方——但写作红线与质量底线仍然强制。详见 format-duanju.md 的定位声明。
 
