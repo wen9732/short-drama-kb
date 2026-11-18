@@ -106,10 +106,21 @@ def shot_paragraphs(block):
 
 # ---------- 检查 ----------
 
+CN_NUM = {"一": "1", "二": "2", "三": "3", "四": "4", "五": "5", "六": "6", "七": "7", "八": "8", "九": "9", "十": "10"}
+
+
 def unify_shots(text):
-    """把「SHOT 01｜0–2秒」这种写法（真人情绪表演的结构）统一成「镜头1（0-2秒）」再查。"""
-    return re.sub(r"SHOT\s*0*(\d+)\s*[｜|]\s*(\d+)\s*[-–—]\s*(\d+)\s*秒",
-                  lambda m: f"镜头{m.group(1)}（{m.group(2)}-{m.group(3)}秒）", text)
+    """把「SHOT 01｜0–2秒」「分镜一（0-5秒）」「分镜一｜0-5秒」统一成「镜头1（0-5秒）」再查。"""
+    text = re.sub(
+        r"SHOT\s*0*(\d+)\s*[｜|]\s*(\d+)\s*[-–—]\s*(\d+)\s*秒",
+        lambda m: f"镜头{m.group(1)}（{m.group(2)}-{m.group(3)}秒）",
+        text,
+    )
+    return re.sub(
+        r"分镜([一二三四五六七八九十]|\d+)\s*(?:[（(]\s*(\d+)\s*[-–—]\s*(\d+)\s*秒\s*[）)]|[｜|]\s*(\d+)\s*[-–—]\s*(\d+)\s*秒)",
+        lambda m: f"镜头{CN_NUM.get(m.group(1), m.group(1))}（{m.group(2) or m.group(4)}-{m.group(3) or m.group(5)}秒）",
+        text,
+    )
 
 
 def check(draft, script=None):
@@ -317,6 +328,10 @@ def selftest():
     e3, _ = check("```\nSHOT 01｜0–2秒｜空镜。\nSHOT 02｜3–5秒｜说：{好。}\n不要字幕，不要背景音乐。\n```")
     if not any("没有接上一镜" in e for e in e3):
         print("验错自检失败，SHOT 写法的时间戳没查到")
+        return False
+    e5, _ = check("```\n分镜一（0-2秒）｜空镜。\n分镜二（3-5秒）｜说：{好。}\n不要字幕，不要背景音乐。\n```")
+    if not any("没有接上一镜" in e for e in e5):
+        print("验错自检失败，分镜一/二 写法的时间戳没查到")
         return False
     return True
 
