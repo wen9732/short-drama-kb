@@ -232,9 +232,10 @@ def check(draft, script=None):
                 notes.append(f"{tag} {sm.group(0)} 有台词但不足2秒，念不完")
 
         # 保护项
-        for need in ("不要字幕", "不要背景音乐"):
-            if need not in block:
-                errors.append(f"{tag} 缺保护项「{need}」")
+        if "不要字幕" not in block:
+            errors.append(f"{tag} 缺保护项「不要字幕」")
+        if not any(k in block for k in ("不要背景音乐", "不要背景配乐", "不要旋律配乐")):
+            errors.append(f"{tag} 缺保护项「不要背景音乐」")
 
         # 参考编号
         nums = [int(x) for x in BIND.findall(block)]

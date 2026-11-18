@@ -17,6 +17,29 @@
 - 没做完、等用户拍板的事（同步写进 日志/当前状态.md）。
 ```
 
+# v3.26｜2026-11-18｜新增情绪音效与声音桥设计库＋解除纯中文死锁确立「中文因果＋精选英文工业词」规范
+
+## 改了什么
+- **起因（【用户】2026-11-18）**：① 复盘前期全中文锁定纠偏过头，反手压掉了《万物生》作者极有效的专业影视镜头与光学英语词（如 `anamorphic / rack focus / whip pan / Dutch angle / parallel tracking / Kodak Vision3`）；② 针对后期剪辑薄弱、直出成片容易声画平淡的痛点，结合用户提供的短剧爆款音效清单＋`BRAAM` 与联网核实的预告片/Seedance 2.5 原生音频工程架构，补充完整的直出型音效与声桥库，并明确**“绝不无脑每段乱加”**的反滥用开关。
+- **1. 新增 `.claude/skills/cam-transitions/references/情绪音效与声音桥设计库.md`（同步接入 `cam-transitions/SKILL.md`、`切点速查.md` 与 `工位/导演.md` / `工位/情绪导演.md` 按需清单）：**
+  - **三不无脑加铁律：** 日常写实与温馨建立段严禁乱加鼓点与 `Swish`（只用 `Room Tone` + 精准物理 `Foley`）；每 10–15 秒段内主重击（`BRAAM / Sub Impact / Drum Hit`）最多 1 次；无高速运动不空喊 `Swish / Whoosh`；写实正剧与品牌 TVC 禁用 `UI Pop / Coin / Glitch`。
+  - **六大情绪音效武器库：** 卡点重击（`BRAAM`、`Sub Impact / Sub Drop`、`Cinematic Impact`、`Dull Drum Hit`、`Metal Hit`、`Heartbeat Thump`）、蓄力铺垫（`Reverse Riser / Riser`、`Suckback`、`Low Drone`、`String Riser`、`Tick Tock`）、运动转场（`Windy Swish / Whoosh`、`Swoosh`、`Wind Pass`、`Glass Break / Glitch Transition`）、主观心理反转（`Muffled` 抽空闷音、`Tinnitus / Ear Ringing` 耳鸣、`Ping / Sting`、`Jump Scare Sting`、`Downer / Rise Pop`）、写实 `Foley / Room Tone / Audio Ducking` 与功能提示音，配题材选配决策矩阵表。
+  - **弱后期直出四大声音桥模板：** 成对写出 `J-cut (Pre-Lap)`、`L-cut`、`Suckback → Muffled → BRAAM / Sub Impact` 爆发链与跨段 `Tick Tock` 节律锁；并修改 `cam-transitions/SKILL.md` 允许直出型声桥在 `A` 模式直接落地，不必一律推给后期 `D`。
+- **2. 升级 `exec-seedance25`（解除纯中文死锁＋分离“禁BGM配乐”与“功能音效”）：**
+  - 更新 `SKILL.md`、`剧本转分镜通用路线.md`、`通用写法工作流与示范.md`、`常规标杆补充示范集.md`、`分镜式写法.md`：正式确立 **「自然中文叙事因果为主干 ＋ 精选英文影视光学/运镜/音效词点睛」**（允许直接单写英文专业词且后必跟中文起止触发，**严禁同一概念中英复读**，严禁 `8K/masterpiece/CG/render` 废词，非花絮禁写 `camera/operator` 实体词）。
+  - 区分保护项「不要背景音乐（指旋律歌曲配乐）」与分镜音轨里的精准 SFX/声桥（防止音轨留白让模型自配俗乐），同步升级 `tools/check_errors.py`（兼容 `不要背景音乐/不要背景配乐/不要旋律配乐`）。
+- **3. 同步更新《万物生》借鉴边界与全仓 AI 交接包：**
+  - 更新 `范例/短剧/索引.md`（保留并可借鉴《万物生》高纯度专业英文工业词与声画事件链）、`维护手册.md`、`启动.md`、`CLAUDE.md`、`新窗口启动卡.md`、`日志/当前状态.md`、`系统提示词/*` 至 **`v3.26`**，全量重新导出 `系统提示词/导出/` 全部文件。
+
+## 给接手 AI
+- 写 Seedance 2.5 视频提示词时**不用硬憋全中文**：光学/运镜/音效工业词可直接用 `anamorphic / Kodak Vision3 500T / rack focus / whip pan / Dutch angle / parallel tracking / BRAAM / Reverse Riser / Suckback / Muffled / Room Tone`（禁中英双写重复，禁静态修图废词）。
+- **声画节奏优先按题材和节拍选配**，日常写实保干净 `Room Tone + Foley`，只有真正到蓄力、爆点、甩镜、声桥时才点名加音效，**严禁每段无脑砸鼓点和呼啸**。
+
+## 遗留
+- 《儿童座椅TVC》按用户要求暂缓（等待仓库声效与混写升级落地后，再结合短剧强冲突与丝滑转场重塑整条片子）。
+
+---
+
 # v3.25｜2026-11-18｜Seedance 2.5 通用写法工作流（含六大纯中文脱敏示范）、《万物生》《茧物语》入短剧库及全套 AI 调用指南同步升级
 
 ## 改了什么
