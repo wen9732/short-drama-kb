@@ -19,7 +19,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILLS = os.path.join(ROOT, ".claude", "skills")
-PREFIXES = ("exec-", "script-", "perf-", "fight-", "cam-", "genre-", "art-")
+PREFIXES = ("exec-", "script-", "perf-", "fight-", "cam-", "genre-", "art-", "audio-")
 MAX_LINES = 200
 
 errors, warnings = [], []
