@@ -150,6 +150,10 @@ metadata:
 | 阶段4 剧本、改稿 | ＋ `references/core/03-stage4.md` ＋ `references/dialogue-aesthetics.md` |
 | 阶段5 冷读、诊断 | ＋ `references/core/04-stage5.md` ＋ `references/core/02-stage3.md` ＋ 格式文件 |
 | 作品发在抖音等短视频平台：选题、前 15 秒、划走点诊断 | ＋ `references/viral-topic.md`（阶段1、2、5 用；和反庸俗冲突时以本 Skill 为准） |
+| 惊悚、恐怖、灵异、生化丧尸、密室犯罪、规则怪谈题材 | ＋ `references/genre-horror-craft.md`（目录页：速查卡 `HT-01`～`HT-24` ＋ 按需单点直读 7 份不压缩全本解剖卡） |
+| 赛博朋克、末日废土、超能力、机械暴力动作、混沌反派、高概念科幻短片 | ＋ `references/genre-scifi-action-craft.md`（目录页：速查卡 `SA-01`～`SA-12` ＋ 按需单点直读 8 份不压缩全本解剖卡） |
+| 巨兽奇观冒险、零台词纯视听短片、奇幻/动物世界观、道具智取与强催泪情感 | ＋ `references/genre-wonder-emotion-craft.md`（目录页：速查卡 `WE-01`～`WE-08` ＋ 按需单点直读 5 份不压缩全本解剖卡） |
+| 喊口令 **`调用电影剧本库` / `查看电影剧本清单` / `调用剧本解剖：<片名>` / `拆解电影剧本`** | ＋ `references/script-master-index.md`（20 部已入库原剧本防重总表与金标 SOP；点名某片直接单点读 `references/scripts/<slug>.md`，投喂新剧本严禁擅自压缩） |
 
 只读表里列出的文件，其余不预读；遇到"见 core-methodology 第X节"，按目录页找到对应文件再读。
 
