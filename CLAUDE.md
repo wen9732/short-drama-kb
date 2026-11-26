@@ -1,6 +1,6 @@
 # 短剧编导知识库｜总入口
 
-**当前版本：v3.56**（版本规则见 `维护手册.md` 第六节）
+**当前版本：v3.57**（版本规则见 `维护手册.md` 第六节）
 
 AI 视频短剧、CG 3D/2D 动漫短剧与独立音频编导知识库，视频线主要面向豆包 Seedance 2.5（真人实拍短剧走 `exec-seedance25`，CG 3D/2D/混媒/定格动画与拟人动物 IP 短剧走独立 `exec-cg-animation`），独立音频配乐线面向 **Doubao-Seed-Audio 1.0**（生图亦涉及 Midjourney、GPT 生图、即梦、LibTV 画布）。
 
